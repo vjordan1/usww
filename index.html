@@ -885,32 +885,47 @@ JotForm.paymentExtrasOnTheFly([null,{"name":"heading","qid":"1","text":"USWW Mem
     JotForm.showJotFormPowered = "0";
   </script>
   <script>
-    JotForm.poweredByText = "Powered by Jotform";
-  </script><input type="hidden" class="simple_spc" id="simple_spc" name="simple_spc" value="260992041310145" />
-  <script type="text/javascript">
-    var all_spc = document.querySelectorAll("form[id='260992041310145'] .si" + "mple" + "_spc");
-    for (var i = 0; i < all_spc.length; i++)
-    {
-      all_spc[i].value = "260992041310145-260992041310145";
-    }
-  </script><input type="hidden" id="input_41" name="q41_uniqueId" class="form-textbox form-hidden" data-defaultvalue="000001" data-component="autoincrement" aria-labelledby="label_41" value="000001" />
-</form>
-<div id="sr-status-message" class="sr-only" role="status" aria-live="polite" style="font-size: 0;"></div><script>
-JotForm.init(function() {
+    JotForm.init(function() {
     const qrField = document.getElementById("input_21");
     if (!qrField) {
         console.warn("QR field not found — check field ID");
         return;
     }
+
     qrField.addEventListener("change", function() {
         const values = this.value.split("~");
         if (values.length >= 6) {
-            document.getElementById("input_12").value = values[0];
-            document.getElementById("input_24").value = values[1];
-            document.getElementById("input_25").value = values[2];
-            document.getElementById("input_26_full").value = values[3];
-            document.getElementById("input_30").value = values[4];
-            document.getElementById("input_31").value = values[5];
+            document.getElementById("input_12").value      = values[0]; // Contact ID
+            document.getElementById("input_24").value      = values[1]; // First Name
+            document.getElementById("input_25").value      = values[2]; // Last Name
+            document.getElementById("input_26_full").value = values[3]; // Phone
+            document.getElementById("input_30").value      = values[4]; // Employer
+
+            // For the GeoComplete widget — set hidden field AND notify widget iframe
+            const addressValue = values[5];
+            const addressField = document.getElementById("input_31");
+            const widgetFrame  = document.getElementById("customFieldFrame_31");
+
+            if (addressField) {
+                // Set the hidden field value directly
+                addressField.value = addressValue;
+
+                // Dispatch events so Jotform's form engine picks up the change
+                addressField.dispatchEvent(new Event('input',  { bubbles: true }));
+                addressField.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Notify the widget iframe via postMessage so it displays the value
+            if (widgetFrame && widgetFrame.contentWindow) {
+                widgetFrame.contentWindow.postMessage(
+                    JSON.stringify({
+                        type    : "setData",
+                        data    : addressValue,
+                        widgetID: "31"
+                    }),
+                    "https://www.jotform.com"
+                );
+            }
         }
     });
 });
